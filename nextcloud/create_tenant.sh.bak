@@ -1,0 +1,69 @@
+#!/bin/bash
+
+# Cek argumen (sekarang butuh 3 argumen: nama, port, size)
+if [ "$#" -ne 3 ]; then
+    echo "Usage: sudo ./create_tenant.sh <nama_tenant> <port> <size>"
+    echo "Contoh: sudo ./create_tenant.sh client_alpha 8081 2G"
+    exit 1
+fi
+
+# Cek apakah dijalankan dengan sudo
+if [ "$EUID" -ne 0 ]; then
+  echo "Mohon jalankan script ini dengan 'sudo' karena butuh akses mount filesystem."
+  exit
+fi
+
+TENANT_NAME=$1
+PORT=$2
+SIZE=$3  # Contoh input: 1G, 500M, 5G
+BASE_DIR=$(pwd)
+TARGET_DIR="$BASE_DIR/tenants/$TENANT_NAME"
+IMG_FILE="$TARGET_DIR/storage.img"
+MOUNT_POINT="$TARGET_DIR/nextcloud_data"
+
+echo "=== Memulai Provisioning Tenant: $TENANT_NAME (Quota: $SIZE) ==="
+
+# 1. Buat folder tenant
+if [ -d "$TARGET_DIR" ]; then
+    echo "Error: Tenant '$TENANT_NAME' sudah ada!"
+    exit 1
+fi
+mkdir -p "$TARGET_DIR"
+
+# 2. Copy template docker-compose
+cp "$BASE_DIR/templates/docker-compose.yml" "$TARGET_DIR/docker-compose.yml"
+echo "TENANT_NAME=$TENANT_NAME" > "$TARGET_DIR/.env"
+echo "PORT_WEB=$PORT" >> "$TARGET_DIR/.env"
+
+# --- BAGIAN STORAGE ISOLATION (inti dari Tugas) ---
+
+echo "[+] Membuat Virtual Disk Image sebesar $SIZE..."
+# Membuat file kosong dengan ukuran tertentu
+fallocate -l $SIZE "$IMG_FILE"
+
+echo "[+] Memformat Virtual Disk menjadi ext4..."
+# Memformat file tersebut agar bisa dianggap sebagai harddisk
+mkfs.ext4 -F "$IMG_FILE" > /dev/null
+
+echo "[+] Mounting Virtual Disk ke folder data..."
+# Membuat folder untuk mount point
+mkdir -p "$MOUNT_POINT"
+# Menempelkan (mount) file image ke folder
+mount -o loop "$IMG_FILE" "$MOUNT_POINT"
+
+# PENTING: Permission Fix
+# Karena di-mount oleh root, kita harus ubah agar bisa ditulisi oleh siapa saja (termasuk docker)
+chmod 777 "$MOUNT_POINT"
+
+# --------------------------------------------------
+
+# 4. Jalankan Docker Compose
+echo "[+] Menyalakan layanan..."
+cd "$TARGET_DIR"
+docker compose up -d
+
+echo "========================================================"
+echo "SUKSES! Tenant '$TENANT_NAME' aktif."
+echo "Storage Limit: $SIZE (Hard Limit)"
+echo "Akses: http://localhost:$PORT"
+echo "========================================================"

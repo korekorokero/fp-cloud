@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  db:
+    # ... (bagian DB sama seperti sebelumnya) ...
+    image: mariadb:10.6
+    container_name: ${TENANT_NAME}_db
+    restart: always
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=adminpass
+      - MYSQL_PASSWORD=dbpass
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+
+  app:
+    image: nextcloud:latest
+    container_name: ${TENANT_NAME}_app
+    restart: always
+    ports:
+      - ${PORT_WEB}:80
+    links:
+      - db
+    depends_on:
+      - db
+    environment:
+      - MYSQL_PASSWORD=dbpass
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_HOST=db
+      - NEXTCLOUD_TRUSTED_DOMAINS=all
+    volumes:
+      # 1. File Sistem Nextcloud (Disimpan di volume Docker biasa/unlimited)
+      - nextcloud_system_files:/var/www/html
+      # 2. HANYA Data User yang disimpan di Harddisk Virtual Terbatas
+      - ./nextcloud_data:/var/www/html/data
+
+volumes:
+  db_data:
+    name: ${TENANT_NAME}_db_data
+  nextcloud_system_files:
+    name: ${TENANT_NAME}_system_files
