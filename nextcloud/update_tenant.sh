@@ -27,7 +27,7 @@ CURRENT_NAME=$1
 shift # Geser argumen agar $1 sekarang menjadi flags (-p, -n, dsb)
 
 BASE_DIR=$(pwd)
-TARGET_DIR="$BASE_DIR/tenants/$CURRENT_NAME"
+TARGET_DIR="$BASE_DIR/nextcloud/tenants/$CURRENT_NAME"
 ENV_FILE="$TARGET_DIR/.env"
 IMG_FILE="$TARGET_DIR/storage.img"
 MOUNT_POINT="$TARGET_DIR/nextcloud_data"
@@ -93,7 +93,7 @@ fi
 # 4. PROSES: RENAME TENANT (Jika diminta)
 FINAL_DIR="$TARGET_DIR" # Defaultnya direktori tetap sama
 if [ ! -z "$NEW_NAME" ]; then
-    NEW_TARGET_DIR="$BASE_DIR/tenants/$NEW_NAME"
+    NEW_TARGET_DIR="$BASE_DIR/nextcloud/tenants/$NEW_NAME"
     
     if [ -d "$NEW_TARGET_DIR" ]; then
         echo "Error: Gagal rename. Tenant '$NEW_NAME' sudah ada."
@@ -106,7 +106,7 @@ if [ ! -z "$NEW_NAME" ]; then
     echo "[+] Mengubah Nama Tenant menjadi '$NEW_NAME'..."
     
     # Pindah folder
-    cd "$BASE_DIR/tenants"
+    cd "$BASE_DIR/nextcloud/tenants"
     mv "$CURRENT_NAME" "$NEW_NAME"
     
     # Update variabel di .env

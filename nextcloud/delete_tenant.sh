@@ -13,22 +13,12 @@ fi
 
 TENANT_NAME=$1
 BASE_DIR=$(pwd)
-TARGET_DIR="$BASE_DIR/tenants/$TENANT_NAME"
+TARGET_DIR="$BASE_DIR/nextcloud/tenants/$TENANT_NAME"
 MOUNT_POINT="$TARGET_DIR/nextcloud_data"
 
 if [ ! -d "$TARGET_DIR" ]; then
     echo "Error: Tenant '$TENANT_NAME' tidak ditemukan!"
     exit 1
-fi
-
-echo "!!! PERINGATAN !!!"
-echo "Anda akan menghapus tenant '$TENANT_NAME' beserta SELURUH datanya."
-echo "Proses ini tidak dapat dibatalkan."
-read -p "Apakah Anda yakin? (y/n): " confirm
-
-if [[ $confirm != "y" ]]; then
-    echo "Dibatalkan."
-    exit 0
 fi
 
 echo "[1/4] Menghentikan container..."
@@ -41,7 +31,7 @@ echo "[2/4] Melepas mount point storage..."
 umount "$MOUNT_POINT" 2>/dev/null || echo "Info: Folder tidak sedang di-mount atau sudah terlepas."
 
 echo "[3/4] Menghapus file dan direktori tenant..."
-cd "$BASE_DIR"
+cd "$BASE_DIR/nextcloud/"
 rm -rf "$TARGET_DIR"
 
 echo "[4/4] Selesai."

@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 nextcloud/tenants
+server/users.db
 
 # Editor directories and files
 .vscode/*

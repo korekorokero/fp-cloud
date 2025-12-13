@@ -1,13 +1,29 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import LoginComponent from './LoginComponent.jsx'
+import { useState } from 'react';
+import LoginComponent from './LoginComponent';
+import Dashboard from './Dashboard';
+import './App.css';
 
 function App() {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (userData) => {
+    console.log('User logged in:', userData); // Debug log
+    setUser(userData);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
   return (
-    <LoginComponent />
-  )
+    <>
+      {user ? (
+        <Dashboard user={user} onLogout={handleLogout} />
+      ) : (
+        <LoginComponent onLogin={handleLogin} />
+      )}
+    </>
+  );
 }
 
-export default App
+export default App;

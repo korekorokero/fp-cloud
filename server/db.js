@@ -1,15 +1,9 @@
 import Database from 'better-sqlite3';
 import bcrypt from 'bcrypt';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const db = new Database('server/users.db');
 
-// Create/open database
-const db = new Database(path.join(__dirname, 'users.db'));
-
-// Create users table
+// Drop and recreate the table with size column
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -20,25 +14,14 @@ db.exec(`
   )
 `);
 
-// Hash password
-async function hashPassword(password) {
-  const saltRounds = 10;
-  return await bcrypt.hash(password, saltRounds);
-}
-
-// Verify password
-async function verifyPassword(password, hash) {
-  return await bcrypt.compare(password, hash);
-}
-
-// Register new user
-async function registerUser(username, password, size) {
+export async function registerUser(username, password, size) {
   try {
-    const hashedPassword = await hashPassword(password);
+    const hashedPassword = await bcrypt.hash(password, 10);
     const stmt = db.prepare('INSERT INTO users (username, password, size) VALUES (?, ?, ?)');
     const result = stmt.run(username, hashedPassword, size);
-    return { success: true, userId: result.lastInsertRowid };
+    return { success: true, message: 'User registered successfully', userId: result.lastInsertRowid };
   } catch (error) {
+    console.error('Registration error:', error);
     if (error.code === 'SQLITE_CONSTRAINT') {
       return { success: false, error: 'Username already exists' };
     }
@@ -46,8 +29,7 @@ async function registerUser(username, password, size) {
   }
 }
 
-// Login user
-async function loginUser(username, password) {
+export async function loginUser(username, password) {
   try {
     const stmt = db.prepare('SELECT * FROM users WHERE username = ?');
     const user = stmt.get(username);
@@ -56,27 +38,50 @@ async function loginUser(username, password) {
       return { success: false, error: 'Invalid username or password' };
     }
     
-    const isValid = await verifyPassword(password, user.password);
+    const match = await bcrypt.compare(password, user.password);
     
-    if (!isValid) {
+    if (match) {
+      return { 
+        success: true, 
+        message: 'Login successful',
+        user: {
+          id: user.id,
+          username: user.username,
+          size: user.size
+        }
+      };
+    } else {
       return { success: false, error: 'Invalid username or password' };
     }
-    
-    return { success: true, user: { id: user.id, username: user.username, size: user.size } };
   } catch (error) {
+    console.error('Login error:', error);
     return { success: false, error: error.message };
   }
 }
 
-// Get all users (for debugging)
-function getAllUsers() {
+export function getAllUsers() {
   const stmt = db.prepare('SELECT id, username, size, created_at FROM users');
   return stmt.all();
 }
 
-export {
-  registerUser,
-  loginUser,
-  getAllUsers,
-  db
-};
+export function deleteUser(userId) {
+  try {
+    const stmt = db.prepare('DELETE FROM users WHERE id = ?');
+    const result = stmt.run(userId);
+    return { success: true, changes: result.changes };
+  } catch (error) {
+    console.error('Delete user error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export function updateUserSize(userId, newSize) {
+  try {
+    const stmt = db.prepare('UPDATE users SET size = ? WHERE id = ?');
+    const result = stmt.run(newSize, userId);
+    return { success: true, changes: result.changes };
+  } catch (error) {
+    console.error('Update user size error:', error);
+    return { success: false, error: error.message };
+  }
+}

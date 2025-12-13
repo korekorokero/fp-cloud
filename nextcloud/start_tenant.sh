@@ -8,12 +8,13 @@ fi
 
 TENANT_NAME=$1
 BASE_DIR=$(pwd)
-TARGET_DIR="$BASE_DIR/tenants/$TENANT_NAME"
+TARGET_DIR="$BASE_DIR/nextcloud/tenants/$TENANT_NAME"
 IMG_FILE="$TARGET_DIR/storage.img"
 MOUNT_POINT="$TARGET_DIR/nextcloud_data"
 
 if [ ! -d "$TARGET_DIR" ]; then
     echo "Error: Tenant tidak ditemukan."
+    echo "$TARGET_DIR tidak ada."
     exit 1
 fi
 

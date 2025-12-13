@@ -11,7 +11,7 @@ TENANT_NAME=$1
 PORT=$2
 SIZE=$3
 BASE_DIR=$(pwd)
-TARGET_DIR="$BASE_DIR/tenants/$TENANT_NAME"
+TARGET_DIR="$BASE_DIR/nextcloud/tenants/$TENANT_NAME"
 IMG_FILE="$TARGET_DIR/storage.img"
 MOUNT_POINT="$TARGET_DIR/nextcloud_data"
 
@@ -37,7 +37,7 @@ chmod -R 0770 "$MOUNT_POINT"  # <-- INI KUNCINYA (Jangan 777)
 
 # 3. Setup Docker
 echo "[+] Menyalakan Container..."
-cp "$BASE_DIR/templates/docker-compose.yml" "$TARGET_DIR/docker-compose.yml"
+cp "$BASE_DIR/nextcloud/templates/docker-compose.yml" "$TARGET_DIR/docker-compose.yml"
 echo "TENANT_NAME=$TENANT_NAME" > "$TARGET_DIR/.env"
 echo "PORT_WEB=$PORT" >> "$TARGET_DIR/.env"
 
