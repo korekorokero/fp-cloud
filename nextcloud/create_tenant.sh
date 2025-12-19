@@ -15,6 +15,9 @@ TARGET_DIR="$BASE_DIR/nextcloud/tenants/$TENANT_NAME"
 IMG_FILE="$TARGET_DIR/storage.img"
 MOUNT_POINT="$TARGET_DIR/nextcloud_data"
 
+HOST_BASE=${HOST_PROJECT_PATH:-$BASE_DIR}
+HOST_DATA_DIR="$HOST_BASE/nextcloud_tenants/$TENANT_NAME/nextcloud_data"
+
 # 1. Setup Folder
 if [ -d "$TARGET_DIR" ]; then echo "Error: Tenant sudah ada!"; exit 1; fi
 mkdir -p "$TARGET_DIR"
@@ -40,6 +43,7 @@ echo "[+] Menyalakan Container..."
 cp "$BASE_DIR/nextcloud/templates/docker-compose.yml" "$TARGET_DIR/docker-compose.yml"
 echo "TENANT_NAME=$TENANT_NAME" > "$TARGET_DIR/.env"
 echo "PORT_WEB=$PORT" >> "$TARGET_DIR/.env"
+echo "HOST_DATA_DIR=$HOST_DATA_DIR" >> "$TARGET_DIR/.env"
 
 cd "$TARGET_DIR"
 docker compose up -d

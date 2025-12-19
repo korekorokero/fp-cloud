@@ -35,8 +35,8 @@ services:
       # 1. File Sistem Nextcloud (Disimpan di volume Docker biasa/unlimited)
       - nextcloud_system_files:/var/www/html
       # 2. HANYA Data User yang disimpan di Harddisk Virtual Terbatas
-      - ./nextcloud_data:/var/www/html/data
-
+      - ${HOST_DATA_DIR}:/var/www/html/data
+      
 volumes:
   db_data:
     name: ${TENANT_NAME}_db_data
