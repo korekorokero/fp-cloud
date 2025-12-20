@@ -8,6 +8,8 @@ const execAsync = promisify(exec);
 const app = express();
 const PORT = 3001;
 
+const PRICE_PER_GB = 2;
+
 app.use(cors());
 app.use(express.json());
 
@@ -114,7 +116,7 @@ app.post('/api/start-tenant', async (req, res) => {
   }
 });
 
-// Update tenant endpoint
+// Update tenant endpoint with Pricing Logic
 app.post('/api/update-tenant', async (req, res) => {
   const { userId, newSize } = req.body;
   
@@ -125,6 +127,39 @@ app.post('/api/update-tenant', async (req, res) => {
   if (newSize < 1) {
     return res.status(400).json({ success: false, error: 'Size must be at least 1 GB' });
   }
+
+  // --- BILLING & VALIDATION LOGIC ---
+  // 1. Fetch current user to determine previous size
+  const users = getAllUsers();
+  const user = users.find(u => u.id === userId);
+
+  if (!user) {
+    return res.status(404).json({ success: false, error: 'User not found' });
+  }
+
+  const currentSize = parseInt(user.size);
+  const targetSize = parseInt(newSize);
+
+  if (targetSize < currentSize) {
+    return res.status(400).json({ 
+      success: false, 
+      error: `Cannot decrease storage size (Current: ${currentSize}GB)` 
+    });
+  }
+
+  // 2. Calculate Cost
+  const additionalStorage = targetSize - currentSize;
+  const billAmount = additionalStorage * PRICE_PER_GB;
+
+  // 3. Process "Payment"
+  if (additionalStorage > 0) {
+    console.log(`[BILLING] User ${user.username} (ID: ${userId}) charged $${billAmount} for +${additionalStorage}GB.`);
+    // NOTE: In a real production app, you would integrate Stripe/PayPal here.
+    // await processPayment(user.paymentMethod, billAmount);
+  } else {
+    console.log(`[BILLING] No additional storage requested. No charge.`);
+  }
+  // ----------------------------------
   
   try {
     // Run update tenant script with size option
@@ -145,7 +180,8 @@ app.post('/api/update-tenant', async (req, res) => {
       return res.status(200).json({ 
         success: true, 
         message: 'Storage size updated successfully',
-        newSize: newSize
+        newSize: newSize,
+        billAmount: billAmount
       });
     } else {
       return res.status(500).json({ 

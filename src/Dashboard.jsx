@@ -1,11 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './Dashboard.css';
+
+const PRICE_PER_GB = 2;
 
 function Dashboard({ user, onLogout }) {
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [showUpdateModal, setShowUpdateModal] = useState(false);
     const [newSize, setNewSize] = useState('');
+    const [cost, setCost] = useState(0);
+
+    useEffect(() => {
+        const sizeNum = parseInt(newSize);
+        const currentSize = parseInt(user.size);
+        
+        if (!isNaN(sizeNum) && sizeNum > currentSize) {
+            const additionalStorage = sizeNum - currentSize;
+            setCost(additionalStorage * PRICE_PER_GB);
+        } else {
+            setCost(0);
+        }
+    }, [newSize, user.size]);
 
     const handleOpenStorage = async () => {
         setIsLoading(true);
@@ -44,6 +59,7 @@ function Dashboard({ user, onLogout }) {
     const handleUpdateStorage = () => {
         setShowUpdateModal(true);
         setNewSize(user.size.toString());
+        setCost(0); // Reset cost
         setMessage('');
     };
 
@@ -206,16 +222,34 @@ function Dashboard({ user, onLogout }) {
                                 disabled={isLoading}
                             />
                         </div>
+
+                        {/* 4. DISPLAY THE PRICING CALCULATION */}
+                        {cost > 0 && (
+                            <div className="price-calculation" style={{ margin: '15px 0', padding: '10px', backgroundColor: '#f0f9ff', borderRadius: '4px', color: '#333333'}}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                                    <span>Additional Storage:</span>
+                                    <strong>{parseInt(newSize) - user.size} GB</strong>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                                    <span>Rate:</span>
+                                    <span>${PRICE_PER_GB} / GB</span>
+                                </div>
+                                <div style={{ borderTop: '1px solid #ccc', paddingTop: '5px', display: 'flex', justifyContent: 'space-between', color: '#007bff' }}>
+                                    <strong>Total to Pay:</strong>
+                                    <strong>${cost}</strong>
+                                </div>
+                            </div>
+                        )}
                         
                         {message && <div className="modal-message">{message}</div>}
                         
                         <div className="modal-buttons">
                             <button
                                 onClick={handleUpdateSubmit}
-                                disabled={isLoading}
+                                disabled={isLoading || cost === 0} // Prevent update if no change/cost
                                 className="control-btn update-btn"
                             >
-                                Update
+                                {isLoading ? 'Processing...' : `Pay $${cost} & Update`}
                             </button>
                             <button
                                 onClick={() => setShowUpdateModal(false)}
