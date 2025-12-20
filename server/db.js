@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import bcrypt from 'bcrypt';
 
-const db = new Database('server/users.db');
+const db = new Database('/app/data/users.db');
 
 // Drop and recreate the table with size column
 db.exec(`

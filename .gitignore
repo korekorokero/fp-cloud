@@ -13,6 +13,8 @@ dist-ssr
 *.local
 nextcloud/tenants
 server/users.db
+nextcloud_tenants/
+server_data/
 
 # Editor directories and files
 .vscode/*
@@ -24,3 +26,4 @@ server/users.db
 *.njsproj
 *.sln
 *.sw?
+gi
